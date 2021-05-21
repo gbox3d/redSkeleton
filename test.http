@@ -1,0 +1,9 @@
+### hello rest 
+GET http://localhost:8080/rest/get/filelist?cwd=./
+
+### Post test
+POST http://localhost:8080/rest/post/writeFile
+write-name : test.txt
+write-directory : ./uploads
+
+hello post body

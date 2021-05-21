@@ -1,0 +1,28 @@
+{
+  "name": "redskeleton",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "restapi frame work",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gbox3d/redSkeleton.git"
+  },
+  "keywords": [
+    "rest",
+    "nodejs",
+    "web"
+  ],
+  "author": "gbox3d",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gbox3d/redSkeleton/issues"
+  },
+  "homepage": "https://github.com/gbox3d/redSkeleton#readme",
+  "dependencies": {
+    "node-static": "^0.7.11"
+  }
+}
