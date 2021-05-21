@@ -1,7 +1,7 @@
 
 import http from "http";
 import fs from "fs";
-import {writeFile} from 'fs/promises';
+import { writeFile } from 'fs/promises';
 import net from 'net'
 // import UrlParser from "url"
 import { URL } from 'url';
@@ -158,13 +158,13 @@ class CCoreApp {
           console.log(req.headers)
 
           //포스트는 데이터가 조각조각 들어 온다.
-          req.on('data',  (data)=> {
+          req.on('data', (data) => {
             //body_data += data;
             body_data.push(data)
             console.log(`${data.length}  bytes saved `);
           });
 
-          req.on('end',  async ()=> {
+          req.on('end', async () => {
             //다받고 나면
             res.writeHead(200, {
               'Content-Type': 'text/plain',
@@ -178,12 +178,82 @@ class CCoreApp {
             let _cwd = req.headers['write-directory']
             let _data = Buffer.concat(body_data)
 
-            await writeFile(`${_cwd}/${_name}`, _data );
+            await writeFile(`${_cwd}/${_name}`, _data);
 
             let result = { result: 'ok', body: _data.toString() }
             res.end(JSON.stringify(result));
 
           });
+        }
+        break;
+      case '/post/upload':
+        {
+          let uploadName = req.headers['upload-name']
+          //만약 cORS보안상의 이유로 upload-name같은 커스텀 해더읽기 실패한다면 Access-Control-Allow-Headers 옵션을 주어 응답하면 해당 옵션에 반응하여 재요청 들어온다.
+          if (!uploadName) {
+            //CORS 관련 처리 , 
+            res.writeHead(200, {
+              'Content-Type': 'text/plain',
+              'Access-Control-Allow-Origin': '*',
+              'Access-Control-Allow-Methods': 'POST',
+              'Access-Control-Max-Age': '1000',
+              "Access-Control-Allow-Headers": "upload-name ,content-type ,file-size"
+              // "Access-Control-Allow-Headers": "*" //CORS 정책 허용  * 는 모두 허용 
+            });
+
+            console.log('try custom header')
+            res.end();
+
+          }
+          else {
+            res.writeHead(200, {
+              'Content-Type': 'text/plain',
+              'Access-Control-Allow-Origin': '*',
+              'Access-Control-Allow-Methods': 'POST',
+              'Access-Control-Max-Age': '1000'
+            });
+
+            try {
+
+              let _path = this.upload_path
+
+              //없으면 만들기 
+              if (!fs.existsSync(_path)) {
+                // Do something
+                console.log(`${_path} not exists and create it`)
+                fs.mkdirSync(_path);
+              }
+
+              let file_size = parseInt(req.headers['file-size'])
+
+              let filepath = `${_path}/${uploadName}`;
+              console.log(`start write file path : ${filepath}, file size :${file_size}`);
+
+              //파일 오픈 
+              let fd = fs.openSync(filepath, "w");
+              let _index = 0;
+
+              //포스트는 데이터가 조각조각 들어 온다.
+              req.on('data', (data) => {
+                _index += data.length;
+                console.log(`data receive : ${data.length} , ${_index}`);
+                fs.writeSync(fd, data);
+              });
+
+              req.on('end', () => {
+                console.log(`data receive end : ${_index}`);
+                fs.closeSync(fd);
+                let result = { result: 'ok', fn: filepath }
+                res.end(JSON.stringify(result));
+
+              })
+            }
+            catch (e) {
+              console.log(e)
+              let result = { result: 'err', err: e }
+              res.end(JSON.stringify(result));
+            }
+          }
         }
         break;
       default:
