@@ -3,3 +3,4 @@ web_content/
 node_modules/
 package-lock.json
 settings.yaml
+config.env
