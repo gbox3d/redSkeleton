@@ -47,7 +47,8 @@
 
                         try {
                             
-                            let _url = `http://${api_address}/rest/post/upload`;
+                            // let _url = `http://${api_address}/rest/post/upload`;
+                            let _url = `http://${api_address}/api/v1/upload`;
 
                             console.log(_url);
 
@@ -62,13 +63,14 @@
                                 }) 
                             }))).json();
 
-                            if (_.result == 'ok') {
+                            if (_.r == 'ok') {
                                 this.infoText.innerText = `upload ok ${upload_name}`
                             }
                             else {
                                 this.infoText.innerText = `${_.result}`
                             }
                             console.log(`upload ${upload_name}...ok`)
+                            console.log(_)
                             resolve(_)
 
                         } catch (error) {
@@ -86,8 +88,6 @@
             document.querySelector('form[name=upload-file] input[name="file"]').value = ''
 
         });
-
-
 
     </script>
 

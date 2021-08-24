@@ -1,9 +1,28 @@
 ### hello rest 
-GET http://localhost:8080/rest/get/filelist?cwd=./
+GET http://localhost:8080/api/v1
+Content-Type: application/octet-stream
 
-### Post test
-POST http://localhost:8080/rest/post/writeFile
+### file list
+GET http://localhost:8080/api/v1/filelist?cwd=./
+
+### Post test 바이너리 (raw) 바디파서
+POST http://localhost:8080/api/v1/write
+write-name : test.bin
+write-directory : ./uploads
+Content-Type: application/octet-stream
+
+hello post body express
+
+### Post write text ,텍스프 바디파서 
+POST http://localhost:8080/api/v1/write
 write-name : test.txt
 write-directory : ./uploads
+Content-Type: text/plain
 
-hello post body
+hello express post body text parser 
+
+### Post read file , json 바디 파서 
+POST http://localhost:8080/api/v1/read
+Content-Type: application/json
+
+{"path":"./uploads","file":"test.txt"}
