@@ -16,10 +16,10 @@ router.use((req, res, next) => {
     next()
 })
 
-//raw 바디 미들웨어, content-type : application/octet-stream 인처리
+//raw 바디 미들웨어, content-type : application/octet-stream 일 경우 req.body로 받아온다.
 router.use(express.raw({ limit: '500kb' })) //파일용량 1기가 바이트로 제한
-router.use(express.json())
-router.use(express.text())
+router.use(express.json()) //json 바디 미들웨어, content-type : application/json 일 경우 req.body로 받아온다.
+router.use(express.text()) //text 바디 미들웨어, content-type : application/text 일 경우 req.body로 받아온다.
 
 
 router.route('/').get((req, res) => {
