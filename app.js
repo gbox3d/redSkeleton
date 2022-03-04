@@ -18,6 +18,24 @@ console.log(`run mode : ${process.env.NODE_ENV}`);
 
 const app = express()
 
+//auth 인증 
+app.use('/api',(req, res, next)=> {
+
+    console.log('check api auth')
+    // console.log(req.header('auth-token'))
+
+    let authToken = req.header('auth-token')
+
+    if(authToken === process.env.AUTH_TOKEN) {
+        next() //인증성공 다음단계로...
+    }
+    else {
+        // res.status(401).send('auth fail')
+        res.status(401).json({ r: "err", msg: "auth fail" });
+    }
+
+});
+
 app.use('/api/v1',fileControl);
 app.use(express.static(process.env.STATIC_ASSET));
 

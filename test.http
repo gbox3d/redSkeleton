@@ -1,15 +1,18 @@
 ### hello rest 
 GET http://localhost:8080/api/v1
 Content-Type: application/octet-stream
+auth-token : 5874
 
 ### file list
 GET http://localhost:8080/api/v1/filelist?cwd=./
+auth-token : 5874
 
 ### Post test 바이너리 (raw) 바디파서
 POST http://localhost:8080/api/v1/write
 write-name : test.bin
 write-directory : ./uploads
 Content-Type: application/octet-stream
+auth-token : 5874
 
 hello post body express
 
@@ -18,11 +21,13 @@ POST http://localhost:8080/api/v1/write
 write-name : test.txt
 write-directory : ./uploads
 Content-Type: text/plain
+auth-token : 5874
 
 hello express post body text parser 
 
 ### Post read file , json 바디 파서 
 POST http://localhost:8080/api/v1/read
 Content-Type: application/json
+auth-token : 5874
 
 {"path":"./uploads","file":"test.txt"}
