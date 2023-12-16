@@ -1,7 +1,7 @@
 ### hello rest 
-GET http://localhost:8080/api/v1
+GET http://localhost:8080/api/v2/fc
 Content-Type: application/octet-stream
-auth-token : 5874
+auth-token : DtqBzT4O
 
 ### file list
 GET http://localhost:8080/api/v1/filelist?cwd=./
@@ -31,3 +31,24 @@ Content-Type: application/json
 auth-token : 5874
 
 {"path":"./uploads","file":"test.txt"}
+
+### challenge intro 
+GET http://localhost:8080/api/v2/challenge
+Content-Type: text/plain
+auth-token : DtqBzT4O
+
+
+### challenge register
+GET http://localhost:8080/api/v2/challenge/register?name=이석준&studentId=60695&passwd=1234
+Content-Type: text/plain
+auth-token : DtqBzT4O
+
+### start hl game 
+GET http://localhost:8080/api/v2/challenge/start_hl?studentId=60695&passwd=1234
+Content-Type: text/plain
+auth-token : DtqBzT4O
+
+### find hl game
+GET http://localhost:8080/api/v2/challenge/find_hl?studentId=60695&passwd=1234&num=8765
+Content-Type: text/plain
+auth-token : DtqBzT4O

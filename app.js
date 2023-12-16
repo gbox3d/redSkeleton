@@ -2,14 +2,51 @@ import express from 'express'
 import dotenv from "dotenv"
 import fs from 'fs-extra'
 
+import { MongoClient } from 'mongodb'
+
 import fileControl from "./routers/fileControl.js"
+import challengeSetup from "./routers/challenge.js"
 
 
-
+const theApp = {
+    version : '0.0.1',
+    dbclient: null,
+    dataBase: null
+}
 
 async function main() {
-    dotenv.config({ path: './config.env' }); //환경 변수에 등록 
+    dotenv.config(); //.env 파일을 읽어서 환경변수에 등록한다.
     console.log(`run mode : ${process.env.NODE_ENV}`);
+
+    
+
+    //mongodb setup
+    //mongodb 연결    
+    {
+        //db name check
+        if (!process.env.DB_NAME || process.env.DB_NAME === '') {
+            console.log('DB_NAME is not defined');
+            process.exit(1);
+        }
+
+        const mongoUrl = process.env.MONGO_URL;
+
+        const connectWithRetry = async () => {
+            try {
+                const dbclient = await MongoClient.connect(mongoUrl, { useUnifiedTopology: true });
+                console.log(`Connected successfully to server ${mongoUrl} , DB Name : ${process.env.DB_NAME}`);
+                theApp.dbclient = dbclient;
+                theApp.dataBase = dbclient.db(process.env.DB_NAME);
+            } catch (err) {
+                console.log('Failed to connect to MongoDB, retrying in 5 seconds...', err);
+                setTimeout(connectWithRetry, 5000);
+            }
+        };
+
+        await connectWithRetry();
+
+    }
+
 
     //디랙토리 생성 
     {
@@ -39,7 +76,9 @@ async function main() {
         }
 
     });
-    app.use('/api/v1', fileControl);
+
+    app.use('/api/v2/fc', fileControl);
+    app.use('/api/v2/challenge', challengeSetup(theApp));
 
     if (process.env.PATH_ROUTER) {
 
@@ -61,8 +100,6 @@ async function main() {
             console.log(err);
         }
     }
-
-    // app.use(express.static(process.env.STATIC_ASSET));
 
 
     //순서 주의 맨 마지막에 나온다.
