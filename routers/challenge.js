@@ -93,6 +93,8 @@ export default function (_Context) {
 
                 // hl_number 항목을 업데이트 한다. 생성한 시간도 함께 기록한다.
                 await dataBase.collection(collectionName).updateOne({ studentId, passwd }, { $set: { hl_number: randomNum, hl_number_createdAt: new Date() } });
+
+                console.log(`hl_number : ${randomNum}`)
                 
 
                 // 성공 응답
@@ -135,8 +137,21 @@ export default function (_Context) {
                 const hl_number = existingUser.hl_number
                 if(hl_number == num) {
 
+                    const _found_at = new Date()
+
                     //시간도 함께 기록한다.
-                    await dataBase.collection(collectionName).updateOne({ studentId, passwd }, { $set: { hl_number_foundAt: new Date() } });
+                    await dataBase.collection(collectionName).updateOne({ studentId, passwd }, { $set: { hl_number_foundAt: _found_at } });
+
+                    //기록추가
+                    const record = {
+                        type : 'hl_record',
+                        id : studentId,
+                        name : existingUser.name,
+                        record_time : _found_at - existingUser.hl_number_createdAt,
+                    }
+                    await dataBase.collection(collectionName).insertOne(record);
+
+
                     return res.json({ r: 'ok', info: '정답입니다.',dir : 0});
                 }
                 else {
@@ -160,6 +175,38 @@ export default function (_Context) {
         }
 
 
+    });
+
+    //type : hl_record 인 로그 반환
+    router.route('/get_hl_record').get( async (req, res) => {
+        try {
+
+            const recors_list = await dataBase.collection(collectionName).find({type : 'hl_record'}).toArray();
+
+            res.json({ r: 'ok',list : recors_list});
+            
+
+            
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ r: 'err', info: '서버 오류' });
+        }
+    });
+
+    //collection clear
+    router.route('/clear').get( async (req, res) => {
+        try {
+
+            await dataBase.collection(collectionName).deleteMany({});
+
+            res.json({ r: 'ok',info : 'collection cleared'});
+            
+
+            
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ r: 'err', info: '서버 오류' });
+        }
     });
 
 
