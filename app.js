@@ -6,6 +6,7 @@ import { MongoClient } from 'mongodb'
 
 import fileControl from "./routers/fileControl.js"
 import challengeSetup from "./routers/challenge.js"
+import sampleSetup from "./routers/sample.js"
 
 
 const theApp = {
@@ -79,6 +80,8 @@ async function main() {
 
     app.use('/api/v2/fc', fileControl);
     app.use('/api/v2/challenge', challengeSetup(theApp));
+    
+    app.use('/sample', sampleSetup(theApp));
 
     if (process.env.PATH_ROUTER) {
 

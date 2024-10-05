@@ -4,8 +4,8 @@ Content-Type: application/octet-stream
 auth-token : DtqBzT4O
 
 ### file list
-GET http://localhost:8080/api/v1/filelist?cwd=./
-auth-token : 5874
+GET http://localhost:8080/api/v2/fc/filelist?cwd=./
+auth-token : DtqBzT4O
 
 ### Post test 바이너리 (raw) 바디파서
 POST http://localhost:8080/api/v1/write
@@ -62,3 +62,13 @@ auth-token : DtqBzT4O
 GET http://localhost:8080/api/v2/challenge/clear
 Content-Type: text/plain
 auth-token : DtqBzT4O
+
+
+### sample root call
+GET http://localhost:8080/api/v2/sample
+Content-Type: text/plain
+auth-token : DtqBzT4O
+
+### sample add
+GET http://localhost:8080/sample/add?a=1&b=2
+Content-Type: text/plain
