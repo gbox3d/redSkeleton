@@ -19,7 +19,7 @@ async function main() {
     dotenv.config(); //.env 파일을 읽어서 환경변수에 등록한다.
     console.log(`run mode : ${process.env.NODE_ENV}`);
 
-    
+    // console.log(process.env);
 
     //mongodb setup
     //mongodb 연결    
@@ -83,6 +83,8 @@ async function main() {
     
     app.use('/sample', sampleSetup(theApp));
 
+    
+
     if (process.env.PATH_ROUTER) {
 
         try {
@@ -102,6 +104,12 @@ async function main() {
         catch (err) {
             console.log(err);
         }
+    }
+
+    //static assets
+    if(process.env.STATIC_ASSET){
+        app.use('/', express.static(process.env.STATIC_ASSET));
+        console.log('static assets setup complete ' + process.env.STATIC_ASSET);
     }
 
 

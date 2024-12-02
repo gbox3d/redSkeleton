@@ -54,12 +54,22 @@ Content-Type: text/plain
 auth-token : DtqBzT4O
 
 ### record list
-GET http://localhost:8080/api/v2/challenge/get_hl_record
+GET http://localhost:21070/api/v2/challenge/get_hl_record
 Content-Type: text/plain
 auth-token : DtqBzT4O
 
 ### clear list
 GET http://localhost:8080/api/v2/challenge/clear
+Content-Type: text/plain
+auth-token : DtqBzT4O
+
+### get student list
+GET http://localhost:21070/api/v2/challenge/get_students_list?userId=admin_hlgame
+Content-Type: text/plain
+auth-token : DtqBzT4O
+
+### get student list by class
+GET http://localhost:21070/api/v2/challenge/get_students_list?userId=admin_hlgame&classId=2024_01
 Content-Type: text/plain
 auth-token : DtqBzT4O
 

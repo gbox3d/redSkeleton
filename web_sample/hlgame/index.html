@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        @import url('./main.css');
+    </style>
+    
+</head>
+<body>
+    <div id="intro">
+        <h2>Intro Check</h2>
+        <p class="text-msg" > not checked </p>
+        <button class="btn-check">check</button>
+    </div>
+
+    <div id="register" >
+        <h2>Register</h2>
+        <form>
+            <label for="name">Name</label>
+            <input type="text" id="name" > <br>
+            <label for="student_id">student_id</label>
+            <input type="text" id="student_id" > <br>
+            <label for="passwd">passwd</label>
+            <input type="password" id="passwd" > <br>
+
+            <button class="submit">submit</button>
+
+            <p id="text-result" ></p>
+
+        </form>
+    </div>
+    <div id="start-game">
+        <h2>Start Game</h2>
+        <button class="btn-start">start</button>
+    </div>
+
+    <div id="game">
+        <h2>Game</h2>
+        <input type="text" class="input-answer" >
+        <button class="btn-answer">answer</button>
+    </div>
+
+
+
+    <div id="userMng">
+
+        <h2>User Management</h2>
+
+        classId : <input type="text" class="input-classId" >
+        <button class="getlist">get List</button> <br>
+
+        coin : <input type="text" class="input-coin" >
+        <button class="addcoin">add coin</button> <br>
+
+        <button class="delete">delete</button> 
+
+        <ul>
+
+        </ul>
+
+
+    </div>
+
+    <div id="result">
+        <h2>Result</h2>
+        <button class="btn-result">get result</button>
+        <ul>
+        </ul>
+    </div>
+
+    
+    
+    <script type="module">
+        import main from './index.js'
+        main();
+
+
+    </script>    
+</body>
+</html>

@@ -4,6 +4,8 @@ import path from 'path';
 import moment from 'moment'
 import { dir } from 'console';
 
+import { ObjectId } from 'mongodb';
+
 
 
 export default function (_Context) {
@@ -24,7 +26,7 @@ export default function (_Context) {
         res.set("Access-Control-Allow-Headers", "*");
 
         console.log(req.header('content-type'))
-        console.log(`check file control mw auth ${req.originalUrl}`)
+        console.log(`check challenge mw auth ${req.originalUrl}`)
         next()
     })
 
@@ -40,11 +42,13 @@ export default function (_Context) {
     router.route('/register').get( async (req, res) => {
 
         try {
-            const { studentId, name,passwd } = req.query;
+            const { studentId, name,passwd,classId } = req.query;
 
             // 학번과 이름이 제공되지 않은 경우 오류 응답
             if (!studentId || !name || !passwd) {
-                return res.status(400).json({ r: 'err', info: '학번과 이름, 암호 필요합니다.' });
+                // return res.status(400).json({ r: 'err', info: '학번과 이름, 암호 필요합니다.' });
+                console.log(`학번과 이름, 암호 필요합니다. ${studentId}`)
+                return res.json({ r: 'err', info: '학번과 이름, 암호 필요합니다.' });
             }
 
             // 사용자 검색
@@ -52,7 +56,9 @@ export default function (_Context) {
 
             // 사용자가 이미 존재하는 경우
             if (existingUser) {
-                return res.status(409).json({ r: 'err', info: '이미 등록된 사용자입니다.' });
+                // return res.status(409).json({ r: 'err', info: '이미 등록된 사용자입니다.' });
+                console.log(`이미 등록된 사용자입니다. ${studentId}`)
+                return res.json({ r: 'err', info: '이미 등록된 사용자입니다.' });
             }
 
             // 새 사용자 등록
@@ -62,7 +68,14 @@ export default function (_Context) {
                 passwd,
                 registeredAt: new Date() // 현재 시간 기록
             };
+
+            newUser.coin = 1
+            newUser.classId = classId
+
             await dataBase.collection(collectionName).insertOne(newUser);
+
+            // console.log(`사용자 등록: ${studentId}, ${name}`);
+            console.log(`사용자 등록: `,newUser);
 
             // 성공 응답
             res.json({ r: 'ok', info: '사용자 등록 성공' });
@@ -88,20 +101,109 @@ export default function (_Context) {
             // 사용자가 이미 존재하는 경우
             if (existingUser) {
 
-                //랜덤한 숫자를 생성한다.
-                const randomNum = Math.floor(Math.random() * 10000)
+                //코인이 있는지 확인한다.
+                if(!existingUser.coin != undefined && existingUser.coin > 0) {
 
-                // hl_number 항목을 업데이트 한다. 생성한 시간도 함께 기록한다.
-                await dataBase.collection(collectionName).updateOne({ studentId, passwd }, { $set: { hl_number: randomNum, hl_number_createdAt: new Date() } });
+                    //랜덤한 숫자를 생성한다.
+                    const randomNum = Math.floor(Math.random() * 10000)
 
-                console.log(`hl_number : ${randomNum}`)
-                
+                    // hl_number 항목을 업데이트 한다. 생성한 시간도 함께 기록한다.
+                    await dataBase.collection(collectionName).updateOne({ studentId, passwd }, { $set: { 
+                        hl_number: randomNum, 
+                        hl_number_createdAt: new Date(),
+                        coin : existingUser.coin - 1
+                     } });
 
-                // 성공 응답
-                res.json({ r: 'ok', info: '비밀의 숫자를 생성했습니다.'});
+                    console.log(`hl_number : ${randomNum}`)
+                    
+
+                    // 성공 응답
+                    res.json({ r: 'ok', info: '비밀의 숫자를 생성했습니다.'});
+                }
+                else {
+                    return res.json({ r: 'err', info: '코인이 부족합니다.' });
+                }
                 
             }
-            else{
+            else {
+                return res.status(409).json({ r: 'err', info: '등록되지 않은 사용자입니다.' });
+            }
+
+            
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ r: 'err', info: '서버 오류' });
+        }
+    });
+
+    //studentId 별로 사용자 리스트 얻기
+    router.route('/get_students_list').get( async (req, res) => {
+            
+        try {
+            const { userId,classId } = req.query;
+            
+            if(userId != 'admin_hlgame') {
+                return res.status(400).json({ r: 'err', info: '권한이 없습니다.'});
+            }
+
+            // 사용자 검색
+            // const existingUser = await dataBase.collection(collectionName).find({}).toArray();
+
+            let _query = {}
+
+            if(classId) {
+                _query = {classId : classId}
+            }
+
+            // 사용자 검색
+            const existingUsers = await dataBase.collection(collectionName).find(_query, {
+                projection: { _id: 1, name: 1, studentId: 1, registeredAt: 1 ,classId:1,coin:1}
+            }).toArray();
+
+
+            // 사용자가 이미 존재하는 경우
+            if (existingUsers) {
+                return res.json({ r: 'ok', info: '사용자 리스트입니다.',list : existingUsers});
+            }
+            else {
+                return res.status(409).json({ r: 'err', info: '등록된 사용자가 없습니다.' });
+            }
+            
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ r: 'err', info: '서버 오류' });
+        }
+    });
+
+    //coin 추가
+    router.route('/add_coin').post( async (req, res) => {
+
+        try {
+            const { studentId,userId,coin,passwd } = req.body;
+
+            // // 학번과 이름이 제공되지 않은 경우 오류 응답
+            // if (!studentId || !passwd || !coin) {
+            //     return res.status(400).json({ r: 'err', info: '학번과 암호, coin 가 필요합니다.' });
+            // }
+
+            if(userId != 'admin_hlgame') {
+                return res.status(400).json({ r: 'err', info: '권한이 없습니다.'});
+            }
+
+            // 사용자 검색
+            const existingUser = await dataBase.collection(collectionName).findOne({ studentId });
+
+            // 사용자가 이미 존재하는 경우
+            if (existingUser) {
+
+                //coin 추가
+                await dataBase.collection(collectionName).updateOne({ studentId, passwd }, { $set: { coin: parseInt( existingUser.coin) + parseInt(coin) } });
+
+                // 성공 응답
+                res.json({ r: 'ok', info: '코인이 추가되었습니다.'});
+                
+            }
+            else {
                 return res.status(409).json({ r: 'err', info: '등록되지 않은 사용자입니다.' });
             }
 
@@ -121,11 +223,12 @@ export default function (_Context) {
                 return res.status(400).json({ r: 'err', info: '학번과 암호, number 가 필요합니다.' });
             }
 
-            await new Promise((resolve, reject) => {
-                setTimeout(() => {
-                    resolve();
-                }, 1000);
-            });
+            // 1초 대기
+            // await new Promise((resolve, reject) => {
+            //     setTimeout(() => {
+            //         resolve();
+            //     }, 1000);
+            // });
 
             // 사용자 검색
             const existingUser = await dataBase.collection(collectionName).findOne({ studentId, passwd });
@@ -146,6 +249,7 @@ export default function (_Context) {
                     const record = {
                         type : 'hl_record',
                         id : studentId,
+                        classId : existingUser.classId,
                         name : existingUser.name,
                         record_time : _found_at - existingUser.hl_number_createdAt,
                     }
@@ -177,16 +281,63 @@ export default function (_Context) {
 
     });
 
-    //type : hl_record 인 로그 반환
-    router.route('/get_hl_record').get( async (req, res) => {
+    router.route('/delete_user').post( async (req, res) => {
+
+        const {_id} = req.body
+
+        console.log(req.body)
+        console.log(_id)
+
         try {
 
-            const recors_list = await dataBase.collection(collectionName).find({type : 'hl_record'}).toArray();
+            // _id를 ObjectId로 변환
+            const objectId = new ObjectId(_id);
 
-            res.json({ r: 'ok',list : recors_list});
-            
+
+
+            console.log(_id,objectId)
+
+            // 사용자 검색
+            const existingUser = await dataBase.collection(collectionName).findOne({ _id: objectId });
+
+            // 사용자 검색
+            // const existingUser = await dataBase.collection(collectionName).findOne({ _id });
+
+            // 사용자가 이미 존재하는 경우
+            if (existingUser) {
+                await dataBase.collection(collectionName).deleteOne({ _id: objectId });
+                return res.json({ r: 'ok', info: '사용자 삭제 성공' });
+            }
+            else {
+                return res.json({ r: 'err', info: '등록되지 않은 사용자입니다.' });
+            }
 
             
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ r: 'err', info: '서버 오류' });
+        }
+
+
+    });
+
+    //type : hl_record 인 로그 반환
+    router.route('/get_hl_record').get(async (req, res) => {
+        try {
+            const { classId } = req.query;
+    
+            console.log(classId);
+    
+            const recors_list = await dataBase.collection(collectionName).find({ type: 'hl_record',classId:classId }).toArray();
+    
+            //sort by record_time
+            recors_list.sort((a,b) => {
+                return a.record_time - b.record_time
+            })
+    
+            // 결과 반환
+            res.json({ r: 'ok', list: recors_list });
+    
         } catch (error) {
             console.error(error);
             res.status(500).json({ r: 'err', info: '서버 오류' });
@@ -207,6 +358,33 @@ export default function (_Context) {
             console.error(error);
             res.status(500).json({ r: 'err', info: '서버 오류' });
         }
+    });
+
+    router.route('/get_detail').get( async (req, res) => {
+        const {_id} = req.query
+
+        try {
+            // _id를 ObjectId로 변환
+            const objectId = new ObjectId(_id);
+
+            // 사용자 검색
+            const existingUser = await dataBase.collection(collectionName).findOne({ _id: objectId });
+
+            // 사용자가 이미 존재하는 경우
+            if (existingUser) {
+                return res.json({ r: 'ok', info: '사용자 정보입니다.',detail : existingUser});
+            }
+            else {
+                return res.json({ r: 'err', info: '등록되지 않은 사용자입니다.' });
+            }
+
+            
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ r: 'err', info: '서버 오류' });
+        }
+
+
     });
 
 
