@@ -119,7 +119,7 @@ export default async function main() {
     document.querySelector('#game .btn-answer').addEventListener('click', async function () {
 
         const _answer = document.querySelector('#game .input-answer').value;
-        
+
 
         console.log(_answer);
 
@@ -342,7 +342,10 @@ export default async function main() {
 
         try {
 
-            _selected.forEach(async item => {
+            this.disabled = true;
+
+            for (let item of _selected) {
+                // _selected.forEach(async item => {
                 console.log(item.getAttribute('data-id'));
                 const studentId = item.getAttribute('data-id');
 
@@ -371,17 +374,17 @@ export default async function main() {
 
                 console.log(data);
 
-                const _classId = _userMng.querySelector('.input-classId').value;
+                // });
+            }
 
-                _updateList(_classId);
-            });
+            this.disabled = false;
+
+            const _classId = _userMng.querySelector('.input-classId').value;
+            _updateList(_classId);
 
         } catch (error) {
             console.error('Fetch error:', error);
         }
-
-
-
 
     });
 
@@ -398,7 +401,7 @@ export default async function main() {
                     'Content-Type': 'text/plain',
                     'auth-token': 'DtqBzT4O'
                 }
-                
+
             });
 
             // 응답 결과 확인
@@ -425,7 +428,7 @@ export default async function main() {
             if (data.r === 'ok' && Array.isArray(data.list)) {
                 data.list.forEach(record => {
                     const listItem = document.createElement('li');
-                    listItem.textContent = `classId : ${record.classId } ID: ${record.id}, Name: ${record.name}, record_time: ${record.record_time}`;
+                    listItem.textContent = `classId : ${record.classId} ID: ${record.id}, Name: ${record.name}, record_time: ${record.record_time}`;
                     _record_list.appendChild(listItem);
                 });
             } else {

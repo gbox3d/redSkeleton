@@ -149,10 +149,11 @@ export default function (_Context) {
             // 사용자 검색
             // const existingUser = await dataBase.collection(collectionName).find({}).toArray();
 
-            let _query = {}
+            
+            let _query = { type: { $ne: 'hl_record' } };
 
-            if(classId) {
-                _query = {classId : classId}
+            if (classId) {
+                _query.classId = classId;
             }
 
             // 사용자 검색
