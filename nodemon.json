@@ -4,6 +4,6 @@
       "./webrtc/*",
       "./web_sample/*"
     ],
-    "exec": "babel-node app.js"
+    "exec": "node app.js"
   }
   
