@@ -1,6 +1,8 @@
 import express from 'express'
 import dotenv from "dotenv"
 import fs from 'fs-extra'
+import cors from 'cors';
+
 
 import { MongoClient } from 'mongodb'
 
@@ -60,6 +62,9 @@ async function main() {
 
     const app = express()
 
+    // CORS 미들웨어를 전역으로 적용(모든출처와 헤더 허용)
+    app.use(cors());
+
     //auth 인증 
     app.use('/api', (req, res, next) => {
 
@@ -67,6 +72,8 @@ async function main() {
         // console.log(req.header('auth-token'))
 
         let authToken = req.header('auth-token')
+
+        // console.log(authToken)
 
         if (authToken === process.env.AUTH_TOKEN) {
             next() //인증성공 다음단계로...
