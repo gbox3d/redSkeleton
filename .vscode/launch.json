@@ -14,7 +14,7 @@
             "program": "${file}"
         },
         {
-            "name": "Degbug FireBoltServer",
+            "name": "Degbug HLGame",
             "type": "node",
             "request": "launch",
             "runtimeExecutable": "npm",

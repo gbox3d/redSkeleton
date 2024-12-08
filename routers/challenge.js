@@ -138,15 +138,32 @@ export default function (_Context) {
         }
     });
 
+    router.use('/admin', (req, res, next) => {
+        const admin_token = req.header('admin-token')
+        if (admin_token != process.env.ADMIN_TOKEN) {
+            return res.status(400).json({ r: 'err', info: '권한이 없습니다.' });
+        }
+        console.log('check admin auth from ip : ', req.ip)
+        next()
+    });
+
+
     //studentId 별로 사용자 리스트 얻기
-    router.route('/get_students_list').get(async (req, res) => {
+    router.route('/admin/get_students_list').get(async (req, res) => {
 
         try {
-            const { userId, classId } = req.query;
 
-            if (userId != 'admin_hlgame') {
-                return res.status(400).json({ r: 'err', info: '권한이 없습니다.' });
-            }
+            // const admin_token = req.header('admin-token')
+
+            // if (admin_token != process.env.ADMIN_TOKEN) {
+            //     return res.status(400).json({ r: 'err', info: '권한이 없습니다.' });
+            // }
+
+            const {classId } = req.query;
+
+            // if (userId != 'admin_hlgame') {
+            //     return res.status(400).json({ r: 'err', info: '권한이 없습니다.' });
+            // }
 
             // 사용자 검색
             // const existingUser = await dataBase.collection(collectionName).find({}).toArray();
@@ -179,19 +196,19 @@ export default function (_Context) {
     });
 
     //coin 추가
-    router.route('/add_coin').post(async (req, res) => {
+    router.route('/admin/add_coin').post(async (req, res) => {
 
         try {
-            const { studentId, userId, coin, passwd } = req.body;
+            const { studentId, coin, passwd } = req.body;
 
             // // 학번과 이름이 제공되지 않은 경우 오류 응답
             // if (!studentId || !passwd || !coin) {
             //     return res.status(400).json({ r: 'err', info: '학번과 암호, coin 가 필요합니다.' });
             // }
 
-            if (userId != 'admin_hlgame') {
-                return res.status(400).json({ r: 'err', info: '권한이 없습니다.' });
-            }
+            // if (userId != 'admin_hlgame') {
+            //     return res.status(400).json({ r: 'err', info: '권한이 없습니다.' });
+            // }
 
             // 사용자 검색
             const existingUser = await dataBase.collection(collectionName).findOne({ studentId });
@@ -284,7 +301,7 @@ export default function (_Context) {
 
     });
 
-    router.route('/delete_user').post(async (req, res) => {
+    router.route('/admin/delete_user').post(async (req, res) => {
 
         const { _id } = req.body
 
@@ -325,55 +342,69 @@ export default function (_Context) {
     });
 
     //type : hl_record 인 로그 반환
-    router.route('/get_hl_record').get(async (req, res) => {
+    router.route('/admin/get_hl_record').get(async (req, res) => {
         try {
             const { classId, all } = req.query;
-
-            // console.log(classId);
-
-
-            if (all == 'true') {
+    
+            if (all === 'true') {
                 // 모든 hl_record 검색
                 const recors_list = await dataBase.collection(collectionName).find({ type: 'hl_record' }).toArray();
-
-                recors_list.sort((a,b) => {
-                    return parseInt( a.record_time) - parseInt( b.record_time)
-                })
-        
+    
+                recors_list.sort((a, b) => parseInt(a.record_time) - parseInt(b.record_time));
+    
                 // 결과 반환
                 res.json({ r: 'ok', list: recors_list });
-            }
-            else {
-
-
-
-                // 모든 hl_record와 해당 classId의 레코드 검색
+            } else {
+                // classId에 해당하는 모든 hl_record 검색
                 const recors_list = await dataBase.collection(collectionName).find({ type: 'hl_record', classId: classId }).toArray();
-
-                // studentId를 기준으로 가장 작은 record_time을 가진 항목만 남기기
-                const uniqueRecordsMap = new Map();
-                recors_list.forEach(record => {
-                    if (!uniqueRecordsMap.has(record.studentId) || uniqueRecordsMap.get(record.studentId).record_time > record.record_time) {
-                        uniqueRecordsMap.set(record.studentId, record);
+    
+                // studentId별로 가장 작은 record_time 선택
+                const uniqueRecordsList = recors_list.reduce((map, record) => {
+                    const existingRecord = map.get(record.id);
+                    if (!existingRecord || parseInt(record.record_time) < parseInt(existingRecord.record_time)) {
+                        map.set(record.id, record); // 더 작은 값을 가진 기록으로 업데이트
                     }
-                });
-
-                // Map을 배열로 변환하여 소팅
-                const uniqueRecordsList = Array.from(uniqueRecordsMap.values());
-                uniqueRecordsList.sort((a, b) => parseInt(a.record_time) - parseInt(b.record_time));
-
+                    return map;
+                }, new Map());
+    
+                // Map을 배열로 변환하고 소팅
+                const sortedRecords = Array.from(uniqueRecordsList.values()).sort(
+                    (a, b) => parseInt(a.record_time) - parseInt(b.record_time)
+                );
+    
                 // 결과 반환
-                res.json({ r: 'ok', list: uniqueRecordsList });
+                res.json({ r: 'ok', list: sortedRecords });
             }
         } catch (error) {
             console.error(error);
             res.status(500).json({ r: 'err', info: '서버 오류' });
         }
     });
-
+    
+                  
+    router.route('/admin/delete_hl_record_clear').get(async (req, res) => {
+        const { classId } = req.query; // 삭제할 조건으로 classId를 받음
+    
+        try {
+            // hl_record 데이터 삭제
+            const deleteResult = await dataBase.collection(collectionName).deleteMany({ type: 'hl_record', classId: classId });
+    
+            // 삭제 결과 반환
+            res.json({
+                r: 'ok',
+                deletedCount: deleteResult.deletedCount // 삭제된 문서의 개수 반환
+            });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({
+                r: 'err',
+                info: '서버 오류'
+            });
+        }
+    });
 
     //collection clear
-    router.route('/clear').get(async (req, res) => {
+    router.route('/admin/clear').get(async (req, res) => {
         try {
 
             await dataBase.collection(collectionName).deleteMany({});
@@ -388,7 +419,7 @@ export default function (_Context) {
         }
     });
 
-    router.route('/get_detail').get(async (req, res) => {
+    router.route('/admin/get_detail').get(async (req, res) => {
         const { _id } = req.query
 
         try {

@@ -1,5 +1,9 @@
+let admin_token;
+
 export default async function main() {
     console.log("hello es6");
+
+    
 
     document.querySelector('#intro .btn-check').addEventListener('click', async function () {
         try {
@@ -161,6 +165,16 @@ export default async function main() {
 
     const _userMng = document.querySelector('#userMng');
 
+    //admin token 처리
+    if(localStorage.getItem('admin_token') === null){
+        admin_token = prompt('Enter admin token');
+        localStorage.setItem('admin_token', admin_token);
+    }
+    else{
+        admin_token = localStorage.getItem('admin_token');
+        _userMng.querySelector('.admin-token').innerHTML = `Admin Token : ${admin_token}`;
+    }
+
 
     async function _updateList(_classId) {
         try {
@@ -182,11 +196,12 @@ export default async function main() {
 
 
             // REST API 호출
-            const response = await fetch(`/api/v2/challenge/get_students_list?${params.toString()}`, {
+            const response = await fetch(`/api/v2/challenge/admin/get_students_list?${params.toString()}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'text/plain',
-                    'auth-token': 'DtqBzT4O'
+                    'auth-token': 'DtqBzT4O',
+                    'admin-token': admin_token
                 }
             });
 
@@ -255,11 +270,12 @@ export default async function main() {
         const passwd = _form.passwd.value;
 
         try {
-            const response = await fetch(`/api/v2/challenge/add_coin`, {
+            const response = await fetch(`/api/v2/challenge/admin/add_coin`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'auth-token': 'DtqBzT4O'
+                    'auth-token': 'DtqBzT4O',
+                    'admin-token': admin_token
                 },
                 body: JSON.stringify({
                     userId: userId,
@@ -295,11 +311,12 @@ export default async function main() {
 
             //get user info
 
-            const response = await fetch(`/api/v2/challenge/get_detail?_id=${encodeURIComponent(userId)}`, {
+            const response = await fetch(`/api/v2/challenge/admin/get_detail?_id=${encodeURIComponent(userId)}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'text/plain',
-                    'auth-token': 'DtqBzT4O'
+                    'auth-token': 'DtqBzT4O',
+                    'admin-token': admin_token
                 }
             });
 
@@ -353,11 +370,12 @@ export default async function main() {
                 // params.append('_id', studentId);
 
                 // REST API 호출
-                const response = await fetch(`/api/v2/challenge/delete_user`, {
+                const response = await fetch(`/api/v2/challenge/admin/delete_user`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'auth-token': 'DtqBzT4O'
+                        'auth-token': 'DtqBzT4O',
+                        'admin-token': admin_token
                     },
                     body: JSON.stringify({
                         _id: studentId
@@ -395,11 +413,12 @@ export default async function main() {
             const _classId = _userMng.querySelector('.input-classId').value;
 
             // REST API 호출
-            const response = await fetch(`/api/v2/challenge/get_hl_record?classId=${_classId}`, {
+            const response = await fetch(`/api/v2/challenge/admin/get_hl_record?classId=${_classId}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'text/plain',
-                    'auth-token': 'DtqBzT4O'
+                    'auth-token': 'DtqBzT4O',
+                    'admin-token': admin_token
                 }
 
             });
@@ -442,7 +461,43 @@ export default async function main() {
         }
     });
 
+    document.querySelector('#result .btn-reset').addEventListener('click', async function () {
+        try {
+
+            const _classId = _userMng.querySelector('.input-classId').value;
+
+            const params = new URLSearchParams();
+            // params.append('userId', 'admin_hlgame');
+            params.append('classId', _classId);
 
 
+
+            // REST API 호출
+            const response = await fetch(`/api/v2/challenge/admin/delete_hl_record_clear?${params.toString()}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'text/plain',
+                    'auth-token': 'DtqBzT4O',
+                    'admin-token': admin_token
+                }
+            });
+
+            // 응답 결과 확인
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            // JSON 데이터 파싱
+            const data = await response.json();
+
+            // 결과를 콘솔에 출력
+            console.log(data);
+
+            // 페이지에 결과 표시
+            document.querySelector('#result .text-msg').textContent = `delete count : ${data.deleteCount}`;
+        } catch (error) {
+            console.error('Fetch error:', error);
+        }
+    });
 
 }
