@@ -138,6 +138,147 @@ export default function (_Context) {
         }
     });
 
+    router.route('/find_hl').get(async (req, res) => {
+        try {
+            const { studentId, passwd, num } = req.query;
+
+            // 학번과 이름이 제공되지 않은 경우 오류 응답
+            if (!studentId || !passwd || !num) {
+                return res.status(400).json({ r: 'err', info: '학번과 암호, number 가 필요합니다.' });
+            }
+
+            // 1초 대기
+            // await new Promise((resolve, reject) => {
+            //     setTimeout(() => {
+            //         resolve();
+            //     }, 1000);
+            // });
+
+            // 사용자 검색
+            const existingUser = await dataBase.collection(collectionName).findOne({ studentId, passwd });
+
+            // 사용자가 이미 존재하는 경우
+            if (existingUser) {
+
+                //db 에서 hl_number 를 가져와서 비교한다.
+                const hl_number = existingUser.hl_number
+                if (hl_number == num) {
+
+                    const _found_at = new Date()
+
+                    //시간도 함께 기록한다.
+                    await dataBase.collection(collectionName).updateOne({ studentId, passwd }, { $set: { hl_number_foundAt: _found_at } });
+
+                    //기록추가
+                    const record = {
+                        type: 'hl_record',
+                        id: studentId,
+                        classId: existingUser.classId,
+                        name: existingUser.name,
+                        record_time: _found_at - existingUser.hl_number_createdAt,
+                    }
+                    await dataBase.collection(collectionName).insertOne(record);
+
+
+                    return res.json({ r: 'ok', info: '정답입니다.', dir: 0 });
+                }
+                else {
+
+                    if (hl_number > num)
+                        return res.json({ r: 'ok', info: '정답보다 작습니다.', dir: 1 });
+                    else
+                        return res.json({ r: 'ok', info: '정답보다 큽니다.', dir: -1 });
+                }
+
+
+            }
+            else {
+                return res.status(409).json({ r: 'err', info: '등록되지 않은 사용자입니다.' });
+            }
+
+
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ r: 'err', info: '서버 오류' });
+        }
+
+
+    });
+
+    router.route('/get_coin').get(async (req, res) => {
+        try {
+            const { studentId, passwd } = req.query;
+
+            // 학번과 이름이 제공되지 않은 경우 오류 응답
+            if (!studentId || !passwd) {
+                return res.status(400).json({ r: 'err', info: '학번과 암호가 필요합니다.' });
+            }
+
+            // 사용자 검색
+            const existingUser = await dataBase.collection(collectionName).findOne({ studentId, passwd });
+            
+            // 사용자가 이미 존재하는 경우
+            if (existingUser) {
+                return res.json({ r: 'ok', info: '코인을 반환합니다.', coin: existingUser.coin });
+            }
+            else {
+                return res.status(409).json({ r: 'err', info: '등록되지 않은 사용자입니다.' });
+            }
+        }
+        catch (error) {
+            console.error(error);
+            res.status(500).json({ r: 'err', info: '서버 오류' });
+        }
+    });
+
+    router.route('/get_user_record').get(async (req, res) => {
+
+        try {
+            const { studentId, passwd } = req.query;
+
+            // 학번과 이름이 제공되지 않은 경우 오류 응답
+            if (!studentId || !passwd) {
+                return res.status(400).json({ r: 'err', info: '학번과 암호가 필요합니다.' });
+            }
+
+            // 사용자 검색
+            const existingUser = await dataBase.collection(collectionName).findOne({ studentId, passwd });
+
+            // 사용자가 이미 존재하는 경우
+            if (existingUser) {
+
+                // 사용자가 이미 존재하는 경우
+                const records = await dataBase.collection(collectionName).find({ type: 'hl_record', id: studentId }).toArray();
+
+                // 사용자가 이미 존재하는 경우
+                if (records) {
+                    
+                    //record_time 기준으로 오름 차순으로 정렬
+                    records.sort((a, b) => parseInt(a.record_time) - parseInt(b.record_time));
+
+                    //3개만 반환
+                    records.splice(3);
+
+                    return res.json({ r: 'ok', info: '사용자 기록입니다.', records });
+                }
+                else {
+                    return res.status(409).json({ r: 'err', info: '등록된 기록이 없습니다.' });
+                }
+
+            }
+            else {
+                return res.status(409).json({ r: 'err', info: '등록되지 않은 사용자입니다.' });
+            }
+
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ r: 'err', info: '서버 오류' });
+        }
+
+
+    });
+
+
     router.use('/admin', (req, res, next) => {
         const admin_token = req.header('admin-token')
         if (admin_token != process.env.ADMIN_TOKEN) {
@@ -234,73 +375,7 @@ export default function (_Context) {
         }
     });
 
-    router.route('/find_hl').get(async (req, res) => {
-        try {
-            const { studentId, passwd, num } = req.query;
-
-            // 학번과 이름이 제공되지 않은 경우 오류 응답
-            if (!studentId || !passwd || !num) {
-                return res.status(400).json({ r: 'err', info: '학번과 암호, number 가 필요합니다.' });
-            }
-
-            // 1초 대기
-            // await new Promise((resolve, reject) => {
-            //     setTimeout(() => {
-            //         resolve();
-            //     }, 1000);
-            // });
-
-            // 사용자 검색
-            const existingUser = await dataBase.collection(collectionName).findOne({ studentId, passwd });
-
-            // 사용자가 이미 존재하는 경우
-            if (existingUser) {
-
-                //db 에서 hl_number 를 가져와서 비교한다.
-                const hl_number = existingUser.hl_number
-                if (hl_number == num) {
-
-                    const _found_at = new Date()
-
-                    //시간도 함께 기록한다.
-                    await dataBase.collection(collectionName).updateOne({ studentId, passwd }, { $set: { hl_number_foundAt: _found_at } });
-
-                    //기록추가
-                    const record = {
-                        type: 'hl_record',
-                        id: studentId,
-                        classId: existingUser.classId,
-                        name: existingUser.name,
-                        record_time: _found_at - existingUser.hl_number_createdAt,
-                    }
-                    await dataBase.collection(collectionName).insertOne(record);
-
-
-                    return res.json({ r: 'ok', info: '정답입니다.', dir: 0 });
-                }
-                else {
-
-                    if (hl_number > num)
-                        return res.json({ r: 'ok', info: '정답보다 작습니다.', dir: 1 });
-                    else
-                        return res.json({ r: 'ok', info: '정답보다 큽니다.', dir: -1 });
-                }
-
-
-            }
-            else {
-                return res.status(409).json({ r: 'err', info: '등록되지 않은 사용자입니다.' });
-            }
-
-
-        } catch (error) {
-            console.error(error);
-            res.status(500).json({ r: 'err', info: '서버 오류' });
-        }
-
-
-    });
-
+    
     router.route('/admin/delete_user').post(async (req, res) => {
 
         const { _id } = req.body

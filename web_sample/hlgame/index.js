@@ -3,7 +3,7 @@ let admin_token;
 export default async function main() {
     console.log("hello es6");
 
-    
+    const _textInfoMsg = document.querySelector('#intro .text-msg');
 
     document.querySelector('#intro .btn-check').addEventListener('click', async function () {
         try {
@@ -29,7 +29,7 @@ export default async function main() {
             console.log(data);
 
             // 페이지에 결과 표시
-            document.querySelector('#intro .text-msg').textContent = `Response: ${data.r}, Info: ${data.info}`;
+            _textInfoMsg.textContent = `Response: ${data.r}, Info: ${data.info}`;
         } catch (error) {
             console.error('Fetch error:', error);
         }
@@ -188,6 +188,109 @@ export default async function main() {
 
     });
 
+    _userMng.querySelector('Button.user-coin').addEventListener('click', async function () {
+        let _form = document.querySelector('#register form');
+        const studentId = _form.student_id.value;
+        const passwd = _form.passwd.value;
+
+        const params = new URLSearchParams();
+        params.append('studentId', studentId);
+        params.append('passwd', passwd);
+
+        try {
+            //rest api 호출
+            const response = await fetch(`/api/v2/challenge/get_coin?${params.toString()}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'text/plain',
+                    'auth-token': 'DtqBzT4O'
+                }
+            });
+
+            // 응답 결과 확인
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            // JSON 데이터 파싱
+            const data = await response.json();
+
+            // 결과를 콘솔에 출력
+            console.log(data);
+
+            if(data.r === 'ok'){
+
+                _textInfoMsg.textContent = `Coin : ${data.coin}`;
+            }
+            else{
+                _textInfoMsg.textContent = `Error : ${data.info}`;
+            }
+        }
+        catch (error) {
+            console.error('Fetch error:', error);
+        }
+    });
+
+    _userMng.querySelector('Button.user-record').addEventListener('click', async function () {
+
+        const _record_list = document.querySelector('#result ul');
+
+        let _form = document.querySelector('#register form');
+        const studentId = _form.student_id.value;
+        const passwd = _form.passwd.value;
+
+        const params = new URLSearchParams();
+        params.append('studentId', studentId);
+        params.append('passwd', passwd);
+
+
+        try {
+            //rest api 호출
+            const response = await fetch(`/api/v2/challenge/get_user_record?${params.toString()}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'text/plain',
+                    'auth-token': 'DtqBzT4O'
+                }
+            });
+
+            // 응답 결과 확인
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            // JSON 데이터 파싱
+            const data = await response.json();
+
+            // 결과를 콘솔에 출력
+            console.log(data);
+
+            if(data.r === 'ok'){
+
+                //clear record list
+                let _child = _record_list.lastElementChild;
+                while (_child) {
+                    _record_list.removeChild(_child);
+                    _child = _record_list.lastElementChild;
+                }
+
+                // _textInfoMsg.textContent = `Record : ${data.record}`;
+                for(const record in data.records) { 
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `record_time: ${data.records[record].record_time/1000} 초`;
+                    _record_list.appendChild(listItem);
+                }
+                
+            }
+            else{
+                // _textInfoMsg.textContent = `Error : ${data.info}`;
+            }
+        }
+        catch (error) {
+            console.error('Fetch error:', error);
+        }
+
+    });
 
     async function _updateList(_classId) {
         try {
@@ -248,7 +351,7 @@ export default async function main() {
         }
     }
 
-    document.querySelector('#userMng button.getlist').addEventListener('click', async function (evt) {
+    _userMng.querySelector('button.getlist').addEventListener('click', async function (evt) {
 
         const _classId = _userMng.querySelector('.input-classId').value;
 
@@ -507,7 +610,7 @@ export default async function main() {
             console.log(data);
 
             // 페이지에 결과 표시
-            document.querySelector('#result .text-msg').textContent = `delete count : ${data.deleteCount}`;
+            _textInfoMsg.textContent = `delete count : ${data.deletedCount}`;
         } catch (error) {
             console.error('Fetch error:', error);
         }
