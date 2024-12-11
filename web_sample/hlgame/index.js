@@ -168,12 +168,25 @@ export default async function main() {
     //admin token 처리
     if(localStorage.getItem('admin_token') === null){
         admin_token = prompt('Enter admin token');
+        if(admin_token === null){
+            alert('admin token is required');
+            return;
+        }
         localStorage.setItem('admin_token', admin_token);
     }
     else{
         admin_token = localStorage.getItem('admin_token');
+        console.log(admin_token);
         _userMng.querySelector('.admin-token').innerHTML = `Admin Token : ${admin_token}`;
     }
+
+    userMng.querySelector('.remove-admin-token').addEventListener('click', function() {
+        localStorage.removeItem('admin_token');
+        
+        //reload
+        location.reload();
+
+    });
 
 
     async function _updateList(_classId) {
