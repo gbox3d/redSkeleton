@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HL Game Rankers</title>
+    <style>
+        @import url('./main.css');
+    </style>
+    
+</head>
+<body>
+
+    <div id="record" class="w3-card w3-padding w3-margin">
+        <h2 class="w3-text-theme">Record</h2>
+        <input class="w3-input w3-margin-bottom" type="text" id="class-id" placeholder="Class ID">
+        <input class="w3-input w3-margin-bottom" type="password" id="admin-token" placeholder="Admin Token">
+        <button class="w3-button w3-theme w3-margin-bottom" id="btn-update-token" >Update Token</button>
+        <ul class="w3-ul w3-border">
+            <!-- List items will be appended here -->
+        </ul>
+    </div>
+
+    
+    
+    <script type="module">
+        import main from './index.js'
+        main();
+
+
+    </script>    
+</body>
+</html>

@@ -29,7 +29,7 @@ export default async function main() {
             console.log(data);
 
             // 페이지에 결과 표시
-            _textInfoMsg.textContent = `Response: ${data.r}, Info: ${data.info}`;
+            _textInfoMsg.textContent = `Response: ${data.r}, Info: ${data.info} version ${data.version}`;
         } catch (error) {
             console.error('Fetch error:', error);
         }
@@ -616,4 +616,109 @@ export default async function main() {
         }
     });
 
+
+    async function _setUserCoin({ studentId, coin} ) {
+        try {
+            const response = await fetch(`/api/v2/challenge/admin/set_coin`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'auth-token': 'DtqBzT4O',
+                    'admin-token': admin_token
+                },
+                body: JSON.stringify({
+                    // userId: userId,
+                    studentId: studentId,
+                    coin: coin,
+                    passwd: passwd
+                })
+            });
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            const data = await response.json();
+            console.log(data);
+
+            return data;
+
+        }
+        catch (error) {
+            console.error('Fetch error:', error);
+        }
+    }
+
+    _userMng.querySelector('.reset_coin-all').addEventListener('click', async function () {
+
+
+        let _form = document.querySelector('#register form');
+        const coin = _userMng.querySelector('.input-coin').value;
+        const _classId = _userMng.querySelector('.input-classId').value;
+
+
+        this.disabled = true;
+
+
+        try {
+
+            //get user list
+            const params = new URLSearchParams();
+            params.append('classId', _classId);
+
+
+            // REST API 호출
+            const response = await fetch(`/api/v2/challenge/admin/get_students_list?${params.toString()}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'text/plain',
+                    'auth-token': 'DtqBzT4O',
+                    'admin-token': admin_token
+                }
+            });
+
+            // 응답 결과 확인
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            // JSON 데이터 파싱
+            const data = await response.json();
+
+            console.log(data);
+
+            if(data.r === 'ok'){
+
+                const total_usercount = data.list.length;
+
+                for(let i = 0; i < total_usercount; i++){
+                    const studentId = data.list[i].studentId;
+                    const result = await _setUserCoin({studentId, coin});
+                    _textInfoMsg.textContent = `progress : ${i+1} / ${total_usercount}`;
+                }
+            }
+
+            console.log('done');
+
+            _textInfoMsg.textContent = `done`;
+
+            // alert('done');
+
+
+        }
+        catch (error) {
+            console.error('Fetch error:', error);
+            alert('error');
+        }
+
+        this.disabled = false;
+
+
+        // const studentId = _form.student_id.value;
+        // // const passwd = _form.passwd.value;
+
+        // _setUserCoin({studentId, coin});
+
+
+
+    });
 }
