@@ -1,4 +1,4 @@
-let admin_token;
+let admin_token = null;
 
 
 export default async function main() {
@@ -58,9 +58,29 @@ export default async function main() {
             }
 
         }
-
-
     }
+
+    document.querySelector('#btn-update-token').addEventListener('click', function() {
+        
+        const admin_token = inputAdminToken.value;
+        const _id = inputClassId.value;
+        if(admin_token === ''){
+            alert('admin token is required');
+            return;
+        }
+        localStorage.setItem('admin_token', admin_token);
+        localStorage.setItem('class_id', _id);
+        
+        //reload
+        location.reload();
+
+    });
+
+    document.querySelector('#btn-remove-token').addEventListener('click', function() {
+        localStorage.removeItem('admin_token');
+        localStorage.removeItem('class_id')
+        location.reload();
+    });
 
     
 
@@ -92,7 +112,7 @@ export default async function main() {
         inputClassId.value = class_id;
     }
     else {
-        const _id = prompt('Enter class id');
+        // const _id = prompt('Enter class id');
         if(_id === null){
             alert('class id is required');
             return;
@@ -101,26 +121,18 @@ export default async function main() {
 
     }
 
-    document.querySelector('#btn-update-token').addEventListener('click', function() {
-        
-        const admin_token = inputAdminToken.value;
-        if(admin_token === ''){
-            alert('admin token is required');
-            return;
-        }
-        localStorage.setItem('admin_token', admin_token);
-        
-        //reload
-        location.reload();
+    function _loop() {
 
-    });
+        _updateRank();
 
+        console.log('update rank');
 
+        setTimeout(_loop, 15000);
+    }
 
-    _updateRank();
-
-
-
+    _loop();
     
+
+    // _updateRank();
 
 }
