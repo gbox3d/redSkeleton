@@ -7,9 +7,11 @@ import { dir } from 'console';
 import { ObjectId } from 'mongodb';
 
 
+const _version_ = '1.0.0'
 
 export default function (_Context) {
 
+    const lockMap = new Map();
 
     const router = express.Router()
 
@@ -36,7 +38,7 @@ export default function (_Context) {
     router.use(express.text()) //text 바디 미들웨어, content-type : application/text 일 경우 req.body로 받아온다.
 
     router.route('/').get((req, res) => {
-        res.json({ r: 'ok', info: 'challenge system' })
+        res.json({ r: 'ok', info: 'challenge system', version: _version_ })
     })
 
     router.route('/register').get(async (req, res) => {
@@ -112,7 +114,8 @@ export default function (_Context) {
                         $set: {
                             hl_number: randomNum,
                             hl_number_createdAt: new Date(),
-                            coin: existingUser.coin - 1
+                            coin: existingUser.coin - 1,
+                            attempts: 0 
                         }
                     });
 
@@ -139,71 +142,113 @@ export default function (_Context) {
     });
 
     router.route('/find_hl').get(async (req, res) => {
+        const { studentId, passwd, num } = req.query;
+    
+        if (!studentId || !passwd || !num || isNaN(num)) {
+            return res.status(400).json({ r: 'err', info: '학번, 암호, 숫자 입력이 필요합니다.' });
+        }
+    
+        if (lockMap.has(studentId)) {
+            return res.status(429).json({ r: 'err', info: '이미 요청이 처리 중입니다.' });
+        }
+    
+        lockMap.set(studentId, true); // 잠금 설정
+    
         try {
-            const { studentId, passwd, num } = req.query;
-
-            // 학번과 이름이 제공되지 않은 경우 오류 응답
-            if (!studentId || !passwd || !num) {
-                return res.status(400).json({ r: 'err', info: '학번과 암호, number 가 필요합니다.' });
-            }
-
-            // 1초 대기
-            // await new Promise((resolve, reject) => {
-            //     setTimeout(() => {
-            //         resolve();
-            //     }, 1000);
-            // });
-
-            // 사용자 검색
             const existingUser = await dataBase.collection(collectionName).findOne({ studentId, passwd });
+            if (!existingUser) {
+                return res.status(409).json({ r: 'err', info: '등록되지 않은 사용자입니다.' });
+            }
+    
+            const hl_number = existingUser.hl_number;
+            const updatedAttempts = (existingUser.attempts || 0) + 1;
+    
+            // 시도 횟수 업데이트
+            await dataBase.collection(collectionName).updateOne(
+                { studentId, passwd },
+                { $set: { attempts: updatedAttempts } }
+            );
+    
+            let result = {};
+            if (hl_number == num) {
+                // 정답을 맞췄을 때, 시도 횟수가 3회 이하라면 다시 새로운 숫자 생성
+                if (updatedAttempts <= 3) {
+                    // 새로운 랜덤 숫자 생성(원래 숫자와 다른 숫자로)
+                    let newRandomNum = Math.floor(Math.random() * 10000);
+                    while (newRandomNum === hl_number) {
+                        newRandomNum = Math.floor(Math.random() * 10000);
+                    }
+                    
+                    // 새로운 숫자와 생성시간을 업데이트
+                    await dataBase.collection(collectionName).updateOne(
+                        { studentId, passwd },
+                        {
+                            $set: {
+                                hl_number: newRandomNum,
+                                hl_number_createdAt: new Date()
+                            }
+                        }
+                    );
 
-            // 사용자가 이미 존재하는 경우
-            if (existingUser) {
+                    console.log(`recreate hl_number : ${newRandomNum}`)
 
-                //db 에서 hl_number 를 가져와서 비교한다.
-                const hl_number = existingUser.hl_number
-                if (hl_number == num) {
-
-                    const _found_at = new Date()
-
-                    //시간도 함께 기록한다.
-                    await dataBase.collection(collectionName).updateOne({ studentId, passwd }, { $set: { hl_number_foundAt: _found_at } });
-
-                    //기록추가
+                    // 정답이 아닐 경우 힌트 제공
+                    // let hl_number = newRandomNum;
+                    const dir = newRandomNum > num ? 1 : -1;
+                    result = {
+                        r: 'ok',
+                        info: newRandomNum > num ? '정답보다 작습니다.' : '정답보다 큽니다.',
+                        dir,
+                        attempts: updatedAttempts
+                    };
+                    
+                } else {
+                    // 4회차 이상에서 맞출 경우 기록 저장
+                    const _found_at = new Date();
+                    await dataBase.collection(collectionName).updateOne(
+                        { studentId, passwd },
+                        { $set: { hl_number_foundAt: _found_at } }
+                    );
+        
                     const record = {
                         type: 'hl_record',
                         id: studentId,
                         classId: existingUser.classId,
                         name: existingUser.name,
                         record_time: _found_at - existingUser.hl_number_createdAt,
-                    }
+                        attempts: updatedAttempts
+                    };
                     await dataBase.collection(collectionName).insertOne(record);
-
-
-                    return res.json({ r: 'ok', info: '정답입니다.', dir: 0 });
+        
+                    result = { r: 'ok', info: '정답입니다.', dir: 0, attempts: updatedAttempts };
                 }
-                else {
-
-                    if (hl_number > num)
-                        return res.json({ r: 'ok', info: '정답보다 작습니다.', dir: 1 });
-                    else
-                        return res.json({ r: 'ok', info: '정답보다 큽니다.', dir: -1 });
-                }
-
-
+    
+            } else {
+                // 정답이 아닐 경우 힌트 제공
+                const dir = hl_number > num ? 1 : -1;
+                result = {
+                    r: 'ok',
+                    info: hl_number > num ? '정답보다 작습니다.' : '정답보다 큽니다.',
+                    dir,
+                    attempts: updatedAttempts
+                };
             }
-            else {
-                return res.status(409).json({ r: 'err', info: '등록되지 않은 사용자입니다.' });
-            }
-
-
+    
+            // 응답 전 0.3초(300ms) 대기 (비동기 대기, 다른 요청 처리는 진행됨)
+            await new Promise(resolve => setTimeout(resolve, 300));
+    
+            return res.json(result);
+    
         } catch (error) {
             console.error(error);
-            res.status(500).json({ r: 'err', info: '서버 오류' });
+            return res.status(500).json({ r: 'err', info: '서버 오류' });
+        } finally {
+            lockMap.delete(studentId); // 잠금 해제
         }
-
-
     });
+    
+    
+    
 
     router.route('/get_coin').get(async (req, res) => {
         try {
@@ -340,7 +385,7 @@ export default function (_Context) {
     router.route('/admin/add_coin').post(async (req, res) => {
 
         try {
-            const { studentId, coin, passwd } = req.body;
+            const { studentId, coin } = req.body;
 
             // // 학번과 이름이 제공되지 않은 경우 오류 응답
             // if (!studentId || !passwd || !coin) {
@@ -358,10 +403,40 @@ export default function (_Context) {
             if (existingUser) {
 
                 //coin 추가
-                await dataBase.collection(collectionName).updateOne({ studentId, passwd }, { $set: { coin: parseInt(existingUser.coin) + parseInt(coin) } });
+                await dataBase.collection(collectionName).updateOne({ studentId }, { $set: { coin: parseInt(existingUser.coin) + parseInt(coin) } });
 
                 // 성공 응답
                 res.json({ r: 'ok', info: '코인이 추가되었습니다.' });
+
+            }
+            else {
+                return res.status(409).json({ r: 'err', info: '등록되지 않은 사용자입니다.' });
+            }
+
+
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ r: 'err', info: '서버 오류' });
+        }
+    });
+
+    //set coin
+    router.route('/admin/set_coin').post(async (req, res) => {
+
+        try {
+            const { studentId, coin } = req.body;
+
+            // 사용자 검색
+            const existingUser = await dataBase.collection(collectionName).findOne({ studentId });
+
+            // 사용자가 이미 존재하는 경우
+            if (existingUser) {
+
+                //coin 추가
+                await dataBase.collection(collectionName).updateOne({ studentId }, { $set: { coin: parseInt(coin) } });
+
+                // 성공 응답
+                res.json({ r: 'ok',coin : coin });
 
             }
             else {
