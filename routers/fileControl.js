@@ -83,7 +83,7 @@ router.route('/upload').post((req, res) => {
         }
 
         let file_size = parseInt(req.headers['file-size'])
-        let uploadName = req.headers['upload-name']
+        let uploadName = decodeURIComponent(req.headers['upload-name']);
 
         let filepath = `${_path}/${uploadName}`;
         console.log(`start write file path : ${filepath}, file size :${file_size}`);

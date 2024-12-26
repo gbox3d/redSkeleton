@@ -58,7 +58,7 @@
                                 // 이 부분은 따로 설정하고싶은 header가 있다면 넣으세요, 헤더이름은 대소 문자를 구분하지않음 무조건 소문자 취급
                                 headers: new Headers({
                                     'Content-Type': _fileObj.type,
-                                    'upload-name': upload_name,
+                                    'upload-name': encodeURIComponent(upload_name),
                                     'file-size': _fileObj.size
                                 }) 
                             }))).json();
