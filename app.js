@@ -62,7 +62,7 @@ async function main() {
         }
     }
 
-    // app.use(express.static(process.env.STATIC_ASSET));
+    app.use(express.static(process.env.STATIC_ASSET));
 
 
     //순서 주의 맨 마지막에 나온다.
