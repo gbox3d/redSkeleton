@@ -5,3 +5,4 @@ package-lock.json
 settings.yaml
 config.env
 path_router.json
+temp/
