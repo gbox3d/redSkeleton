@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="main.css">
+    <title>Dwarffle</title>
+</head>
+
+<body>
+
+    <div>
+        <h2>Chunk Uploader</h2>
+        <p id="info-text" > info </p>
+        <input type="file" id="file-input" multiple />
+        <button id="upload-btn">Upload files</button>
+        <progress id="progress-bar" max="100" value="0"></progress>
+
+    </div>
+
+    <div>
+        <h2>File List</h2>
+        <div>
+            <button id="btn-delete">Delete</button>
+            <button id="btn-download">Download</button>
+            <progress id="download-progress" max="100" value="0"></progress>
+
+        </div>
+        <ul id="file-list">
+            
+        </ul>
+
+        <video id="myVideo" width="640" controls>
+            <!-- 
+              GET 요청으로 파일명, 경로를 쿼리 파라미터로 넘김 
+              아래 예시에서는 /api/v1/getVideo?file=sample.mp4&path=./uploads 
+              (실제 파일, 경로는 상황에 맞춰 수정)
+            -->
+            <source src="" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+    </div>
+
+
+
+    <script type="module">
+        import main from './index.js';
+        main(); 
+    </script>
+
+
+</body>
+
+</html>

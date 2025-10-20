@@ -3,6 +3,7 @@ import dotenv from "dotenv"
 import fs from 'fs-extra'
 
 import fileControl from "./routers/fileControl.js"
+import chunkUploader from "./routers/chunkUploader.js"
 
 
 
@@ -31,15 +32,22 @@ async function main() {
         let authToken = req.header('auth-token')
 
         if (authToken === process.env.AUTH_TOKEN) {
+            console.log(`auth success : ${authToken}`)
             next() //인증성공 다음단계로...
         }
         else {
             // res.status(401).send('auth fail')
+            console.log(`auth fail : ${authToken}`)
             res.status(401).json({ r: "err", msg: "auth fail" });
         }
 
     });
-    app.use('/api/v1', fileControl);
+
+    //라우터 등록
+    app.use('/api/v1/fc', fileControl);
+    app.use('/api/v1/uploader', chunkUploader);
+
+
 
     if (process.env.PATH_ROUTER) {
 
@@ -61,6 +69,8 @@ async function main() {
             console.log(err);
         }
     }
+
+    app.use('/uploads',express.static(process.env.UPLOAD_PATH));
 
     app.use(express.static(process.env.STATIC_ASSET));
 
