@@ -29,7 +29,7 @@ async function uploadFileInChunks(file, chunkSize = 1024 * 1024) {
                 'file-size': totalSize,
                 'chunk-start': start,
                 'chunk-size': chunk.size,
-                'auth-token': '5874'
+                'auth-token': '7204'
             },
         });
 

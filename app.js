@@ -23,6 +23,8 @@ async function main() {
 
     const app = express()
 
+    
+
     //auth 인증 
     app.use('/api', (req, res, next) => {
 
@@ -42,6 +44,8 @@ async function main() {
         }
 
     });
+
+    console.log(`auth token ${process.env.AUTH_TOKEN}`)
 
     //라우터 등록
     app.use('/api/v1/fc', fileControl);
