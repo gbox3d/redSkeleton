@@ -4,13 +4,13 @@
 ## npm 모듈 새로 설치하기
 
 ```sh
-npm i @babel/cli @babel/core @babel/node @babel/preset-env dotenv express fs-extra
+npm i dotenv express fs-extra
 npm i -D cross-env nodemon
 ```
 
 ## 사용법
 반드시 클로닝 이후에 npm install을 한번 실행해주세요.  
-sample.config.env 를 config.en 로 바꿔주세요.
+sample.config.env 를 config.env 로 바꿔주세요.
 
 
 ```sh
